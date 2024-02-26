@@ -52,12 +52,12 @@ until [[ $# -eq 0 ]]; do
   case "${1}" in
 
     --arch)
-      readonly arch="${2}"
+      readonly arch="${2?}"
       shift 1
       ;;
 
     --binutils)
-      readonly binutils_version="${2}"
+      readonly binutils_version="${2?}"
       shift 1
       ;;
 
@@ -66,12 +66,12 @@ until [[ $# -eq 0 ]]; do
       ;;
 
     --gcc)
-      readonly gcc_version="${2}"
+      readonly gcc_version="${2?}"
       shift 1
       ;;
 
     --gdb)
-      readonly gdb_version="${2}"
+      readonly gdb_version="${2?}"
       shift 1
       ;;
 
@@ -81,7 +81,7 @@ until [[ $# -eq 0 ]]; do
       ;;
 
     *)
-      echo "ERROR: Unknown argument '${1}' provided..."
+      echo "ERROR: Unknown argument ${1@Q} provided..."
       usage
       exit 1
       ;;
