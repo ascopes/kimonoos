@@ -154,10 +154,11 @@ function buildgcc::build_gcc {
             --without-headers \
             --disable-nls \
             --disable-werror
-          make -j16 all-gcc
-          make -j16 all-target-libgcc
-          make install-gcc
-          make install-target-libgcc
+
+        make -j16 all-gcc
+        make -j16 all-target-libgcc
+        make install-gcc
+        make install-target-libgcc
       '
 }
 
