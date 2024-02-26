@@ -39,6 +39,16 @@ function crosscompiler::build_container_if_exists {
   fi
 }
 
+function crosscompiler::user {
+  # stdout: uid:gid for the current user.
+  local user_name="${USER?}"
+  local uid
+  uid=$(id -u "${user_name}")
+  local gid
+  gid=$(id -g "${user_name}")
+  echo "${uid}:${gid}"
+}
+
 function crosscompiler::start_container {
   # Start the container and leave it in the background. That way we can exec
   # into it multiple times to run commands a little more easily than just passing
@@ -50,8 +60,9 @@ function crosscompiler::start_container {
   crosscompiler::log "Starting build container in the background to schedule tasks within..."
 
   local image="${_CONTAINER_NAME}:${_CONTAINER_TAG}"
-  local user="$(id -u "${USER}"):$(id -g "${USER}")"
   local volume="${1}:${_WORKING_DIR}"
+  local uid_gid
+  uid_gid=$(crosscompiler::user)
 
   local container_id
   container_id=$(docker run \
@@ -60,13 +71,13 @@ function crosscompiler::start_container {
       --init \
       --quiet \
       --rm \
-      --user "${user}" \
+      --user "${uid_gid}" \
       --volume "${volume}:Z" \
       --workdir "${_WORKING_DIR}" \
       "${image}" \
       'sleep infinity')
 
-  crosscompiler::log "Created container ${container_id?}"
+  crosscompiler::log "Created container ${container_id}"
   echo "${container_id}"
 }
 
@@ -77,7 +88,9 @@ function crosscompiler::stop_container {
 
 function crosscompiler::exec_in_container {
   local envvars=()
-  while [[ "${1:-}" == "--env" ]]; do
+  # Always expect at least one argument after the
+  # env tags.
+  while [[ "${1?}" == "--env" ]]; do
     envvars+=(--env "${2?}")
     shift 2
   done
@@ -89,7 +102,7 @@ function crosscompiler::exec_in_container {
 
 readonly _CONTAINER_NAME="io.github.ascopes/kimono/crosscompiler"
 readonly _CONTAINER_TAG="latest"
-readonly _DOCKERFILE_CONTENT=$(cat <<-'EOF'
+readonly _DOCKERFILE_CONTENT=$(cat <<'EOF'
 FROM public.ecr.aws/debian/debian:trixie-slim
 
 RUN apt-get update -yq \
