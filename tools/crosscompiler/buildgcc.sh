@@ -53,7 +53,7 @@ until [[ $# -eq 0 ]]; do
 
     --arch)
       readonly arch="${2}"
-      shift 17
+      shift 1
       ;;
 
     --binutils)
