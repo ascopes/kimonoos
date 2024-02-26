@@ -10,7 +10,7 @@ function crosscompiler::abspath {
 }
 
 function crosscompiler::log {
-  printf "\e[1;33m<%s>\e[0;35m %s\e[0m\n" "$(date)" "${1}" >&2
+  printf "\e[1;33m<%s>\e[0;35m %s\e[0m\n" "$(date)" "${1?}" >&2
 }
 
 function crosscompiler::container_exists {
@@ -34,7 +34,7 @@ function crosscompiler::build_container {
 function crosscompiler::build_container_if_exists {
   # $1 - "true" if forcing the rebuild of the container, "false" otherwise
 
-  if ! crosscompiler::container_exists || [[ "${1?ForceFlag}" == "true" ]]; then
+  if ! crosscompiler::container_exists || [[ "${1?}" == "true" ]]; then
     crosscompiler::build_container
   fi
 }
@@ -67,12 +67,12 @@ function crosscompiler::start_container {
       'sleep infinity')
 
   crosscompiler::log "Created container ${container_id?}"
-  echo "${container_id?}"
+  echo "${container_id}"
 }
 
 function crosscompiler::stop_container {
   crosscompiler::log "Stopping the build container."
-  docker stop "${container_id?}" > /dev/null
+  docker stop "${container_id?}" &> /dev/null
 }
 
 function crosscompiler::exec_in_container {
@@ -118,13 +118,13 @@ ENTRYPOINT ["/bin/bash", "-c"]
 CMD        ["uname -a && make --version && gcc --version"]
 EOF
 )
-readonly _REQUIREMENTS=(docker grep)
+readonly _REQUIREMENTS=(cat docker grep)
 readonly _SCRIPT_DIR=$(crosscompiler::abspath "$(dirname "${BASH_SOURCE[0]}")")
 readonly _WORKING_DIR="/workspace/"
 
-for required_application in "${_REQUIREMENTS[@]}"; do
-  if ! command -v "${required_application}" :> /dev/null; then
-    echo "ERROR: Please install ${required_application} before continuing..." >&2
+for _required_application in "${_REQUIREMENTS[@]}"; do
+  if ! command -v "${_required_application}" &> /dev/null; then
+    echo "ERROR: Please install ${_required_application} before continuing..." >&2
     exit 2
   fi
 done
